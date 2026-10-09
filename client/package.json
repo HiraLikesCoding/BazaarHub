@@ -1,0 +1,32 @@
+{
+  "name": "bazaarhub-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BazaarHub storefront - Next.js + Tailwind CSS",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:next": "next dev",
+    "db": "node scripts/db.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.4",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.27",
+    "mongodb-memory-server": "^11.3.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
