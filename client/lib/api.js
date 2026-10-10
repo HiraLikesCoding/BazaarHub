@@ -11,9 +11,7 @@
  * overrides this for local development (http://localhost:5000).
  *
  * Next.js server code (server components) needs an absolute URL, so it uses the
- * SERVER_URL binding Vercel injects for the `server` service. Bindings exist at
- * runtime only - during a build they are empty, which every caller already
- * treats the same way as an unreachable API.
+ * SERVER_URL binding Vercel injects for the `server` service.
  */
 export function apiBase() {
   if (typeof window !== 'undefined') {
@@ -22,6 +20,19 @@ export function apiBase() {
 
   const serverEnv = (typeof process !== 'undefined' && process.env) || {};
   return (serverEnv.SERVER_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+}
+
+/**
+ * True while `next build` is prerendering pages.
+ *
+ * Bindings only exist at runtime, so there is no `SERVER_URL` during a build -
+ * and any absolute API URL that is set is unreachable from the build container,
+ * which would stall page generation until it times out. Server side calls are
+ * therefore skipped while building: pages prerender with their fallback data
+ * and pick up real data on the first runtime revalidation.
+ */
+function isBuilding() {
+  return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
 const TOKEN_KEY = 'bazaarhub_token';
@@ -58,6 +69,11 @@ export function buildQuery(params = {}) {
 }
 
 export async function api(path, { method = 'GET', body, token, headers = {}, revalidate } = {}) {
+  // No API while prerendering - callers fall back to their empty state.
+  if (typeof window === 'undefined' && isBuilding()) {
+    throw new ApiError('API is not available while building', 0, null);
+  }
+
   const authToken = token === undefined ? getToken() : token;
 
   let response;
