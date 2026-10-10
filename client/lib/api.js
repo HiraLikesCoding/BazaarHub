@@ -2,7 +2,27 @@
  * Small fetch wrapper used by every service.
  * Adds the API base URL, JSON handling, auth headers and friendly errors.
  */
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
+/**
+ * Base URL of the API (no trailing slash).
+ *
+ * Browser: calls stay on the site's own origin (`/api/...`) and the rewrite in
+ * vercel.json forwards them to the `server` service. NEXT_PUBLIC_API_URL only
+ * overrides this for local development (http://localhost:5000).
+ *
+ * Next.js server code (server components) needs an absolute URL, so it uses the
+ * SERVER_URL binding Vercel injects for the `server` service. Bindings exist at
+ * runtime only - during a build they are empty, which every caller already
+ * treats the same way as an unreachable API.
+ */
+export function apiBase() {
+  if (typeof window !== 'undefined') {
+    return (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+  }
+
+  const serverEnv = (typeof process !== 'undefined' && process.env) || {};
+  return (serverEnv.SERVER_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+}
 
 const TOKEN_KEY = 'bazaarhub_token';
 
@@ -42,7 +62,7 @@ export async function api(path, { method = 'GET', body, token, headers = {}, rev
 
   let response;
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(`${apiBase()}${path}`, {
       method,
       // `next.revalidate` only applies when this runs inside Next.js server code
       ...(revalidate ? { next: { revalidate } } : { cache: 'no-store' }),
