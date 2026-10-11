@@ -8,7 +8,7 @@ import ProductGrid from '@/components/product/ProductGrid';
 import Pagination from '@/components/ui/Pagination';
 import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 import { CardSkeleton } from '@/components/ui/LoadingSpinner';
-import { useFetch } from '@/hooks/useFetch';
+import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { fetchProducts } from '@/services/products';
 import { fetchCategories } from '@/services/categories';
@@ -65,19 +65,25 @@ export default function ShopContent({ initialProducts = null, initialCategories 
   // instead of refetching on mount - instant paint, one less request.
   const isInitial = queryKey === initialQuery && !!initialProducts;
 
-  const { data: categoryData } = useFetch(() => fetchCategories(), [], {
-    initial: initialCategories,
-    enabled: initialCategories == null,
+  const { data: categoryData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => fetchCategories(),
+    initialData: initialCategories ?? undefined,
+    staleTime: 5 * 60_000,
   });
 
-  const { data, loading, error, refetch } = useFetch(() => fetchProducts(apiParams), [queryKey], {
+  // When the URL matches what the server already rendered, seed the cache
+  // with that data instead of refetching on mount - instant paint, no request.
+  const { data, isPending, error, refetch } = useQuery({
+    queryKey: ['shop', queryKey],
+    queryFn: () => fetchProducts(apiParams),
+    initialData: isInitial ? initialProducts : undefined,
     enabled: !isInitial,
-    initial: initialProducts,
   });
 
   const shownData = isInitial ? initialProducts : data;
-  const shownLoading = isInitial ? false : loading;
-  const shownError = isInitial ? null : error;
+  const shownLoading = isInitial ? false : isPending;
+  const shownError = isInitial ? null : error ? error.message || 'Something went wrong.' : null;
 
   const products = shownData?.products || [];
   const page = shownData?.page || Number(searchParams.get('page')) || 1;

@@ -5,6 +5,7 @@ import { useFetch } from '@/hooks/useFetch';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
 import { fetchAllOrders, updateOrderStatus } from '@/services/orders';
+import { getSupabase } from '@/lib/supabase';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { ORDER_STATUSES } from '@/lib/constants';
 import { cn } from '@/lib/cn';
@@ -33,6 +34,32 @@ export default function OrdersManager() {
   useEffect(() => {
     setPage(1);
   }, [status, debouncedSearch]);
+
+  // Live updates: refresh the table whenever any order changes somewhere
+  // else (a customer checking out, another admin updating a status).
+  useEffect(() => {
+    let sb;
+    try {
+      sb = getSupabase();
+    } catch {
+      return () => {};
+    }
+
+    let timer = null;
+    const channel = sb
+      .channel('admin-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        // collapse bursts (one checkout can touch several rows)
+        clearTimeout(timer);
+        timer = setTimeout(() => refetch(), 600);
+      })
+      .subscribe();
+
+    return () => {
+      clearTimeout(timer);
+      sb.removeChannel(channel);
+    };
+  }, [refetch]);
 
   async function changeStatus(order, nextStatus) {
     try {
