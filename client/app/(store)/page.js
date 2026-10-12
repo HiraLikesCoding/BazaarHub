@@ -13,8 +13,9 @@ export const revalidate = 120; // refresh product data every 2 minutes
 async function safeFetch(fn, fallback) {
   try {
     return await fn();
-  } catch {
-    // Keep the page usable when the API is not reachable (e.g. during build)
+  } catch (err) {
+    // Keep the page usable when Supabase is unreachable (e.g. during build).
+    console.error('[home] data fetch failed:', err?.message || err);
     return fallback;
   }
 }
@@ -52,8 +53,8 @@ export default async function HomePage() {
         ) : (
           <EmptyState
             icon="🗂️"
-            title="Categories are not loaded yet"
-            description="Start the API server and refresh this page to see the catalogue."
+            title="No categories yet"
+            description="Categories appear here once the demo catalogue has been seeded."
           />
         )}
       </section>
@@ -74,7 +75,7 @@ export default async function HomePage() {
             <EmptyState
               icon="🛍️"
               title="No products to show yet"
-              description="Run the database seed and refresh to load the sample catalogue."
+              description="Run the demo seed and refresh to load the sample catalogue."
               actionLabel="Go to shop"
               actionHref="/shop"
             />

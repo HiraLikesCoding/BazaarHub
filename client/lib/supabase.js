@@ -39,9 +39,20 @@ export function isBuilding() {
   return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
+/**
+ * Accepts the plain project URL from the Supabase dashboard and tolerates a
+ * pasted REST suffix: people often copy `https://<ref>.supabase.co/rest/v1/`,
+ * which would otherwise double up in every request path.
+ */
+function normalizeUrl(url) {
+  return String(url)
+    .replace(/\/rest\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
+}
+
 let client = null;
 
-/** Shared Supabase client (anon key, public RLS reads). */
+/** Shared Supabase client (anon/publishable key, public RLS reads). */
 export function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -54,7 +65,7 @@ export function getSupabase() {
   }
 
   if (!client) {
-    client = createClient(url, anonKey, {
+    client = createClient(normalizeUrl(url), anonKey, {
       auth: { persistSession: true, autoRefreshToken: true },
     });
   }

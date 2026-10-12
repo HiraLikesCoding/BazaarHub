@@ -33,7 +33,7 @@ const COMPANY_LINKS = [
 
 async function getCategories() {
   try {
-    // Cached for 5 minutes so the footer does not hit the API on every request
+    // Cached for 5 minutes so the footer does not hit Supabase on every request
     return await fetchCategories({ revalidate: 300 });
   } catch (err) {
     return [];
