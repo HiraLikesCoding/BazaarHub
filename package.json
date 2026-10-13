@@ -4,11 +4,11 @@
   "private": true,
   "description": "BazaarHub - e-commerce storefront + admin panel (Next.js + Supabase)",
   "scripts": {
-    "dev": "npm run dev --prefix client",
-    "build": "npm run build --prefix client",
-    "start": "npm start --prefix client",
-    "lint": "npm run lint --prefix client",
-    "install:client": "npm install --prefix client",
+    "dev": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "start": "npm --prefix client run start",
+    "lint": "npm --prefix client run lint",
+    "install:client": "npm --prefix client install",
     "seed:supabase": "node client/scripts/seed-supabase.mjs"
   },
   "engines": {
